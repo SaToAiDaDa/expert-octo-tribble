@@ -1,0 +1,29 @@
+CREATE TABLE courses (
+                         course_code VARCHAR(50) PRIMARY KEY,
+                         course_name VARCHAR(255) NOT NULL
+);
+CREATE TABLE teachers (
+                          id INT PRIMARY KEY,
+                          name VARCHAR(255) NOT NULL,
+                          age INT NOT NULL
+);
+CREATE TABLE students (
+                          id SERIAL PRIMARY KEY,
+                          name VARCHAR(255) NOT NULL,
+                          age INT NOT NULL,
+                          class_year INT NOT NULL
+);
+CREATE TABLE teacher_courses (
+                                 teacher_id INT,
+                                 course_code VARCHAR(50),
+                                 PRIMARY KEY (teacher_id, course_code),
+                                 FOREIGN KEY (teacher_id) REFERENCES teachers (id) ON DELETE CASCADE,
+                                 FOREIGN KEY (course_code) REFERENCES courses (course_code) ON DELETE CASCADE
+);
+CREATE TABLE student_courses (
+                                 student_id INT,
+                                 course_code VARCHAR(50),
+                                 PRIMARY KEY (student_id, course_code),
+                                 FOREIGN KEY (student_id) REFERENCES students (id) ON DELETE CASCADE,
+                                 FOREIGN KEY (course_code) REFERENCES courses (course_code) ON DELETE CASCADE
+);

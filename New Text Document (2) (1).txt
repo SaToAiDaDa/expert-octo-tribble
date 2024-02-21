@@ -1,0 +1,635 @@
+import java.sql.*;
+import java.util.Scanner;
+
+public class Main {
+    private static final String DB_URL = "jdbc:postgresql://localhost:5432/postgres1";
+    private static final String USER = "postgres";
+    private static final String PASS = "mynameissaida";
+    private static final Scanner scanner = new Scanner(System.in);
+
+    public static void main(String[] args) {
+        Main enrollmentSystemMain = new Main();
+        enrollmentSystemMain.run();
+    }
+
+    public void run() {
+        try {
+            Class.forName("org.postgresql.Driver");
+            try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS)) {
+                System.out.println("Connected to the database successfully.");
+
+                while (true) {
+                    System.out.println("\nEnrollment System Main Menu:");
+                    System.out.println("1. Teacher Menu");
+                    System.out.println("2. Student Menu");
+                    System.out.println("3. Teacher Course Manager Menu");
+                    System.out.println("4. Student Course Manager Menu");
+                    System.out.println("5. Exit");
+
+                    int choice = scanner.nextInt();
+                    scanner.nextLine();
+
+                    switch (choice) {
+                        case 1:
+                            teacherMenu(conn);
+                            break;
+                        case 2:
+                            studentMenu(conn);
+                            break;
+                        case 3:
+                            teacherCourseManagerMenu(conn);
+                            break;
+                        case 4:
+                            studentCourseManagerMenu(conn);
+                            break;
+                        case 5:
+                            System.out.println("Exiting Enrollment System. Goodbye!");
+                            return;
+                        default:
+                            System.out.println("Invalid choice. Please try again.");
+                    }
+                }
+            }
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+            System.out.println("Failed to connect to the database.");
+        }
+    }
+
+    private void teacherMenu(Connection conn) {
+        while (true) {
+            System.out.println("\nTeacher Menu:");
+            System.out.println("1. Display Teachers");
+            System.out.println("2. Add Teacher");
+            System.out.println("3. Delete Teacher");
+            System.out.println("4. Update Teacher");
+            System.out.println("5. Exit Teacher Menu");
+
+            int choice = scanner.nextInt();
+            scanner.nextLine();
+
+            switch (choice) {
+                case 1:
+                    displayTeachers(conn);
+                    break;
+                case 2:
+                    addTeacher(conn);
+                    break;
+                case 3:
+                    deleteTeacher(conn);
+                    break;
+                case 4:
+                    updateTeacher(conn);
+                    break;
+                case 5:
+                    System.out.println("Exiting Teacher Menu.");
+                    return;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+
+    private void studentMenu(Connection conn) {
+        while (true) {
+            System.out.println("\nStudent Menu:");
+            System.out.println("1. Display Students");
+            System.out.println("2. Add Student");
+            System.out.println("3. Delete Student");
+            System.out.println("4. Update Student");
+            System.out.println("5. Exit Student Menu");
+
+            int choice = scanner.nextInt();
+            scanner.nextLine();
+
+            switch (choice) {
+                case 1:
+                    displayStudents(conn);
+                    break;
+                case 2:
+                    addStudent(conn);
+                    break;
+                case 3:
+                    deleteStudent(conn);
+                    break;
+                case 4:
+                    updateStudent(conn);
+                    break;
+                case 5:
+                    System.out.println("Exiting Student Menu.");
+                    return;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+
+    private void teacherCourseManagerMenu(Connection conn) {
+        while (true) {
+            System.out.println("\nTeacher Course Manager Menu:");
+            System.out.println("1. Display Teacher-Course Relationships");
+            System.out.println("2. Add Teacher-Course Relationship");
+            System.out.println("3. Create Course and Associate with Teacher");
+            System.out.println("4. Delete Teacher-Course Relationship");
+            System.out.println("5. Update Teacher-Course Relationship");
+            System.out.println("6. Exit Teacher Course Manager Menu");
+
+            int choice = scanner.nextInt();
+            scanner.nextLine();
+
+            switch (choice) {
+                case 1:
+                    displayTeacherCourses(conn);
+                    break;
+                case 2:
+                    addTeacherCourse(conn);
+                    break;
+                case 3:
+                    createCourse(conn);
+                    break;
+                case 4:
+                    deleteTeacherCourse(conn);
+                    break;
+                case 5:
+                    updateTeacherCourse(conn);
+                    break;
+                case 6:
+                    System.out.println("Exiting Teacher Course Manager Menu.");
+                    return;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+
+    private void studentCourseManagerMenu(Connection conn) {
+        while (true) {
+            System.out.println("\nStudent Course Manager Menu:");
+            System.out.println("1. Enroll in Course");
+            System.out.println("2. Drop Course");
+            System.out.println("3. Display Enrolled Courses");
+            System.out.println("4. Exit Student Course Manager Menu");
+
+            int choice = scanner.nextInt();
+            scanner.nextLine();
+
+            switch (choice) {
+                case 1:
+                    enrollInCourse(conn);
+                    break;
+                case 2:
+                    dropCourse(conn);
+                    break;
+                case 3:
+                    displayEnrolledCourses(conn);
+                    break;
+                case 4:
+                    System.out.println("Exiting Student Course Manager Menu.");
+                    return;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+
+    private void displayTeachers(Connection conn) {
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM teachers")) {
+            while (rs.next()) {
+                System.out.println("ID: " + rs.getInt("id") +
+                        ", Name: " + rs.getString("name") +
+                        ", Age: " + rs.getInt("age"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Error displaying teachers.");
+        }
+    }
+
+    private void addTeacher(Connection conn) {
+        System.out.println("Enter teacher id (integer):");
+        int id = scanner.nextInt();
+        scanner.nextLine(); // Consume newline
+        System.out.println("Enter teacher name:");
+        String name = scanner.nextLine();
+        System.out.println("Enter teacher age:");
+        int age = scanner.nextInt();
+
+        try (PreparedStatement pstmt = conn.prepareStatement("INSERT INTO teachers (id, name, age) VALUES (?, ?, ?)")) {
+            pstmt.setInt(1, id);
+            pstmt.setString(2, name);
+            pstmt.setInt(3, age);
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows > 0) {
+                System.out.println("Teacher added successfully.");
+            } else {
+                System.out.println("Teacher could not be added.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Error adding teacher.");
+        }
+    }
+
+
+    private void deleteTeacher(Connection conn) {
+        System.out.println("Enter teacher ID to delete:");
+        int id = scanner.nextInt();
+
+        try (PreparedStatement pstmt = conn.prepareStatement("DELETE FROM teachers WHERE id = ?")) {
+            pstmt.setInt(1, id);
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows > 0) {
+                System.out.println("Teacher deleted successfully.");
+            } else {
+                System.out.println("Teacher could not be found.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Error deleting teacher.");
+        }
+    }
+
+    private void updateTeacher(Connection conn) {
+        System.out.println("Enter teacher ID to update:");
+        int id = scanner.nextInt();
+        scanner.nextLine();
+        System.out.println("Enter updated name:");
+        String name = scanner.nextLine();
+        System.out.println("Enter updated age:");
+        int age = scanner.nextInt();
+
+        try (PreparedStatement pstmt = conn.prepareStatement("UPDATE teachers SET name = ?, age = ? WHERE id = ?")) {
+            pstmt.setString(1, name);
+            pstmt.setInt(2, age);
+            pstmt.setInt(3, id);
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows > 0) {
+                System.out.println("Teacher updated successfully.");
+            } else {
+                System.out.println("Teacher could not be found.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Error updating teacher.");
+        }
+    }
+
+    private void displayStudents(Connection conn) {
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM students")) {
+            while (rs.next()) {
+                System.out.println("ID: " + rs.getInt("id") +
+                        ", Name: " + rs.getString("name") +
+                        ", Age: " + rs.getInt("age") +
+                        ", Class Year: " + rs.getInt("class_year"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Error displaying students.");
+        }
+    }
+
+    private void addStudent(Connection conn) {
+        System.out.println("Enter student name:");
+        String name = scanner.nextLine();
+        System.out.println("Enter student age:");
+        int age = scanner.nextInt();
+        System.out.println("Enter student class year:");
+        int classYear = scanner.nextInt();
+
+        try (PreparedStatement pstmt = conn.prepareStatement("INSERT INTO students (name, age, class_year) VALUES (?, ?, ?)")) {
+            pstmt.setString(1, name);
+            pstmt.setInt(2, age);
+            pstmt.setInt(3, classYear);
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows > 0) {
+                System.out.println("Student added successfully.");
+            } else {
+                System.out.println("Student could not be added.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Error adding student.");
+        }
+    }
+
+    private void deleteStudent(Connection conn) {
+        System.out.println("Enter student ID to delete:");
+        int id = scanner.nextInt();
+
+        try (PreparedStatement pstmt = conn.prepareStatement("DELETE FROM students WHERE id = ?")) {
+            pstmt.setInt(1, id);
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows > 0) {
+                System.out.println("Student deleted successfully.");
+            } else {
+                System.out.println("Student could not be found.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Error deleting student.");
+        }
+    }
+
+    private void updateStudent(Connection conn) {
+        System.out.println("Enter student ID to update:");
+        int id = scanner.nextInt();
+        scanner.nextLine();
+        System.out.println("Enter updated name:");
+        String name = scanner.nextLine();
+        System.out.println("Enter updated age:");
+        int age = scanner.nextInt();
+        System.out.println("Enter updated class year:");
+        int classYear = scanner.nextInt();
+
+        try (PreparedStatement pstmt = conn.prepareStatement("UPDATE students SET name = ?, age = ?, class_year = ? WHERE id = ?")) {
+            pstmt.setString(1, name);
+            pstmt.setInt(2, age);
+            pstmt.setInt(3, classYear);
+            pstmt.setInt(4, id);
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows > 0) {
+                System.out.println("Student updated successfully.");
+            } else {
+                System.out.println("Student could not be found.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Error updating student.");
+        }
+    }
+
+    private void createCourse(Connection conn) {
+        System.out.println("Enter teacher ID:");
+        int teacherId = scanner.nextInt();
+        scanner.nextLine();
+
+        if (!isTeacherExists(conn, teacherId)) {
+            System.out.println("Teacher with ID " + teacherId + " does not exist.");
+            return;
+        }
+
+        System.out.println("Enter course code:");
+        String courseCode = scanner.nextLine();
+        System.out.println("Enter course name:");
+        String courseName = scanner.nextLine();
+
+        if (isCourseExists(conn, courseCode)) {
+            System.out.println("Course with code " + courseCode + " already exists.");
+            return;
+        }
+
+        try {
+
+            addCourse(conn, courseCode, courseName);
+
+            addTeacherCourse(conn, teacherId, courseCode);
+
+            System.out.println("Course created and associated with the teacher successfully.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Error creating course and associating with teacher.");
+        }
+    }
+
+
+    private void addCourse(Connection conn, String courseCode, String courseName) throws SQLException {
+        try (PreparedStatement pstmt = conn.prepareStatement("INSERT INTO courses (course_code, course_name) VALUES (?, ?)")) {
+            pstmt.setString(1, courseCode);
+            pstmt.setString(2, courseName);
+            pstmt.executeUpdate();
+        }
+    }
+    private void addTeacherCourse(Connection conn, int teacherId, String courseCode) {
+        if (isTeacherCourseRelationshipExists(conn, teacherId, courseCode)) {
+            System.out.println("Teacher is already associated with the course.");
+            return;
+        }
+
+        try (PreparedStatement pstmt = conn.prepareStatement("INSERT INTO teacher_courses (teacher_id, course_code) VALUES (?, ?)")) {
+            pstmt.setInt(1, teacherId);
+            pstmt.setString(2, courseCode);
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows > 0) {
+                System.out.println("Teacher added to course successfully.");
+            } else {
+                System.out.println("Teacher or course not found. Check IDs or codes.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Error adding teacher to course.");
+        }
+    }
+
+    private boolean isTeacherCourseRelationshipExists(Connection conn, int teacherId, String courseCode) {
+        try (PreparedStatement pstmt = conn.prepareStatement("SELECT 1 FROM teacher_courses WHERE teacher_id = ? AND course_code = ?")) {
+            pstmt.setInt(1, teacherId);
+            pstmt.setString(2, courseCode);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private void enrollInCourse(Connection conn) {
+        System.out.println("Enter student ID:");
+        int studentId = scanner.nextInt();
+        scanner.nextLine();
+        System.out.println("Enter course code to enroll:");
+        String courseCode = scanner.nextLine();
+
+        try (PreparedStatement pstmt = conn.prepareStatement("INSERT INTO student_courses (student_id, course_code) VALUES (?, ?)")) {
+            pstmt.setInt(1, studentId);
+            pstmt.setString(2, courseCode);
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows > 0) {
+                System.out.println("Enrolled in course successfully.");
+            } else {
+                System.out.println("Enrollment failed. Check student ID or course code.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Error enrolling in course.");
+        }
+    }
+
+    private void dropCourse(Connection conn) {
+        System.out.println("Enter student ID:");
+        int studentId = scanner.nextInt();
+        scanner.nextLine(); 
+        System.out.println("Enter course code to drop:");
+        String courseCode = scanner.nextLine();
+
+        try (PreparedStatement pstmt = conn.prepareStatement("DELETE FROM student_courses WHERE student_id = ? AND course_code = ?")) {
+            pstmt.setInt(1, studentId);
+            pstmt.setString(2, courseCode);
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows > 0) {
+                System.out.println("Dropped course successfully.");
+            } else {
+                System.out.println("Course not found in the enrollment records.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Error dropping course.");
+        }
+    }
+
+    private void displayEnrolledCourses(Connection conn) {
+        System.out.println("Enter student ID:");
+        int studentId = scanner.nextInt();
+        scanner.nextLine();
+
+        try (PreparedStatement pstmt = conn.prepareStatement("SELECT * FROM student_courses WHERE student_id = ?")) {
+            pstmt.setInt(1, studentId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    System.out.println("Course Code: " + rs.getString("course_code"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Error displaying enrolled courses.");
+        }
+    }
+
+    private void displayTeacherCourses(Connection conn) {
+        System.out.println("Enter teacher ID:");
+        int teacherId = scanner.nextInt();
+        scanner.nextLine();
+
+        try (PreparedStatement pstmt = conn.prepareStatement("SELECT * FROM teacher_courses WHERE teacher_id = ?")) {
+            pstmt.setInt(1, teacherId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    System.out.println("Course Code: " + rs.getString("course_code"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Error displaying teacher's courses.");
+        }
+    }
+
+    private void deleteTeacherCourse(Connection conn) {
+        System.out.println("Enter teacher ID:");
+        int teacherId = scanner.nextInt();
+        scanner.nextLine();
+        System.out.println("Enter course code to delete:");
+        String courseCode = scanner.nextLine();
+
+        try (PreparedStatement pstmt = conn.prepareStatement("DELETE FROM teacher_courses WHERE teacher_id = ? AND course_code = ?")) {
+            pstmt.setInt(1, teacherId);
+            pstmt.setString(2, courseCode);
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows > 0) {
+                System.out.println("Teacher deleted from course successfully.");
+            } else {
+                System.out.println("Teacher or course not found in the records.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Error deleting teacher from course.");
+        }
+    }
+
+    private void updateTeacherCourse(Connection conn) {
+        System.out.println("Enter teacher ID:");
+        int teacherId = scanner.nextInt();
+        scanner.nextLine();
+        System.out.println("Enter course code to update:");
+        String oldCourseCode = scanner.nextLine();
+        System.out.println("Enter new course code:");
+        String newCourseCode = scanner.nextLine();
+
+        try (PreparedStatement pstmt = conn.prepareStatement("UPDATE teacher_courses SET course_code = ? WHERE teacher_id = ? AND course_code = ?")) {
+            pstmt.setString(1, newCourseCode);
+            pstmt.setInt(2, teacherId);
+            pstmt.setString(3, oldCourseCode);
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows > 0) {
+                System.out.println("Teacher's course updated successfully.");
+            } else {
+                System.out.println("Teacher or course not found. Check IDs or codes.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Error updating teacher's course.");
+        }
+    }
+    private void displayCourses(Connection conn) {
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM courses")) {
+            while (rs.next()) {
+                System.out.println("Course Code: " + rs.getString("course_code") +
+                        ", Course Name: " + rs.getString("course_name"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Error displaying courses.");
+        }
+    }
+
+    private void addTeacherCourse(Connection conn) {
+        System.out.println("Enter teacher ID:");
+        int teacherId = scanner.nextInt();
+        scanner.nextLine();
+
+        displayCourses(conn);
+
+        System.out.println("Enter course code to add:");
+        String courseCode = scanner.nextLine();
+
+        if (!isTeacherExists(conn, teacherId)) {
+            System.out.println("Teacher with ID " + teacherId + " does not exist.");
+            return;
+        }
+
+        if (!isCourseExists(conn, courseCode)) {
+            System.out.println("Course with code " + courseCode + " does not exist.");
+            return;
+        }
+
+        try (PreparedStatement pstmt = conn.prepareStatement("INSERT INTO teacher_courses (teacher_id, course_code) VALUES (?, ?)")) {
+            pstmt.setInt(1, teacherId);
+            pstmt.setString(2, courseCode);
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows > 0) {
+                System.out.println("Teacher added to course successfully.");
+            } else {
+                System.out.println("Teacher or course not found. Check IDs or codes.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Error adding teacher to course.");
+        }
+    }
+
+    private boolean isTeacherExists(Connection conn, int teacherId) {
+        try (PreparedStatement pstmt = conn.prepareStatement("SELECT 1 FROM teachers WHERE id = ?")) {
+            pstmt.setInt(1, teacherId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private boolean isCourseExists(Connection conn, String courseCode) {
+        try (PreparedStatement pstmt = conn.prepareStatement("SELECT 1 FROM courses WHERE course_code = ?")) {
+            pstmt.setString(1, courseCode);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+}
